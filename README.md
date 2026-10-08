@@ -1,4 +1,5 @@
 # AdPulse
+<<<<<<< HEAD
 
 Full-stack advertising campaign management platform with Admin, Advertiser and Publisher roles.
 
@@ -30,3 +31,6 @@ VITE_API_URL=https://your-render-api.onrender.com/api
 ```
 
 `client/vercel.json` keeps React routes working when a visitor refreshes or opens a URL directly.
+=======
+Advertisement platform
+>>>>>>> af26fda0f441ef0080c239c27aa8982d8c13a94d
