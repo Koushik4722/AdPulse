@@ -1,0 +1,2 @@
+import mongoose from 'mongoose';
+export default mongoose.model('PublisherSite', new mongoose.Schema({ publisher: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, name: String, url: String, status: { type: String, default: 'pending' }, impressions: { type: Number, default: 0 }, clicks: { type: Number, default: 0 }, earnings: { type: Number, default: 0 }, adCode: String }, { timestamps: true }));

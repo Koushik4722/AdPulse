@@ -1,0 +1,2 @@
+import 'dotenv/config'; import mongoose from 'mongoose'; import bcrypt from 'bcryptjs'; import User from './models/User.js';
+await mongoose.connect(process.env.MONGODB_URI); for(const [name,email,role] of [['Admin','admin@adpulse.test','admin'],['Ava Advertiser','advertiser@adpulse.test','advertiser'],['Paul Publisher','publisher@adpulse.test','publisher']]){if(!await User.findOne({email}))await User.create({name,email,role,approved:true,password:await bcrypt.hash('password123',12)})} console.log('Demo accounts seeded');await mongoose.disconnect();
