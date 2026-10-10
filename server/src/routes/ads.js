@@ -18,7 +18,7 @@ router.get('/adpulse.js', publicCors, (req, res) => {
       var image=document.createElement('img'); image.src=ad.imageUrl; image.alt=ad.name||'Advertisement'; image.style.cssText='display:block;max-width:100%;height:auto';
       frame.appendChild(image); script.insertAdjacentElement('afterend',frame);
       fetch(api+'/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({site:siteId,campaign:ad.id,type:'impression'})});
-      frame.addEventListener('click',function(){navigator.sendBeacon(api+'/track',new Blob([JSON.stringify({site:siteId,campaign:ad.id,type:'click'})],{type:'application/json'}));});
+      frame.addEventListener('click',function(){fetch(api+'/track',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({site:siteId,campaign:ad.id,type:'click'})});});
     }).catch(function(){});
   })();`);
 });
