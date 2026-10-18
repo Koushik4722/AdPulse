@@ -8,13 +8,17 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
-        value: 20
+        value: 22
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
         sync: false
-      - key: JWT_SECRET
-        generateValue: true
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_ADMIN_EMAILS
+        sync: false
       - key: CLIENT_URL
         sync: false
       - key: AD_SERVER_URL

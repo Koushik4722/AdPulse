@@ -7,7 +7,7 @@ const SocketCtx = createContext({ socket: null, live: false, metric: null, fraud
 export const useSocket = () => useContext(SocketCtx);
 
 export function SocketProvider({ children }) {
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [socket, setSocket] = useState(null);
   const [live, setLive] = useState(false);
   const [metric, setMetric] = useState(null);
@@ -19,9 +19,11 @@ export function SocketProvider({ children }) {
       setLive(false);
       return undefined;
     }
-    const s = io(socketUrl, { withCredentials: true, transports: ['websocket', 'polling'] });
-    s.emit('join', String(user._id || user.id));
-    if (user.role === 'admin') s.emit('join_admin');
+    const s = io(socketUrl, {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      auth: (callback) => getToken().then((token) => callback({ token })).catch(() => callback({ token: '' }))
+    });
     s.on('connect', () => setLive(true));
     s.on('disconnect', () => setLive(false));
     s.on('metric', (payload) => setMetric({ ...payload, at: Date.now() }));
@@ -32,7 +34,7 @@ export function SocketProvider({ children }) {
       setSocket(null);
       setLive(false);
     };
-  }, [user]);
+  }, [user?._id, getToken]);
 
   return <SocketCtx.Provider value={{ socket, live, metric, fraud }}>{children}</SocketCtx.Provider>;
 }

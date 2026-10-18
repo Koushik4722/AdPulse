@@ -18,7 +18,7 @@ async function simulate() {
   const publisher = await User.findOne({ role: 'publisher' });
 
   if (!advertiser || !publisher) {
-    console.error('Demo users not found. Please run `npm run seed --prefix server` first.');
+    console.error('Advertiser and publisher profiles are required. Create accounts through Clerk, then rerun this script.');
     process.exit(1);
   }
 

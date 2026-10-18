@@ -1,9 +1,13 @@
 import 'dotenv/config'; import express from 'express'; import cors from 'cors'; import mongoose from 'mongoose'; import {createServer} from 'node:http'; import {Server} from 'socket.io';
+import { clerkMiddleware, verifyToken } from '@clerk/express';
+import User from './models/User.js';
 import auth from './routes/auth.js'; import campaigns from './routes/campaigns.js'; import publishers from './routes/publishers.js'; import admin from './routes/admin.js'; import insights from './routes/insights.js'; import uploads from './routes/uploads.js'; import ads from './routes/ads.js';
 const allowedOrigins=[process.env.CLIENT_URL,'https://adpulse-xi.vercel.app','http://localhost:5173'].filter(Boolean);
 const corsOptions={origin:(origin,callback)=>callback(null,!origin||allowedOrigins.includes(origin)),credentials:true};
 const app = express();
 app.set('trust proxy', 1);
+if (process.env.CLERK_SECRET_KEY && process.env.CLERK_PUBLISHABLE_KEY) app.use(clerkMiddleware());
+else console.warn('Clerk keys are missing; protected API routes will not authenticate.');
 const server = createServer(app);
 const io = new Server(server, { cors: corsOptions });
 
@@ -27,13 +31,27 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong' });
 });
 
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token || !process.env.CLERK_SECRET_KEY) throw new Error('Missing session token');
+    const claims = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY,
+      authorizedParties: allowedOrigins
+    });
+    const profile = await User.findOne({ clerkId: claims.sub, isBlocked: false });
+    if (!profile) throw new Error('No active AdPulse profile');
+    socket.data.profile = profile;
+    next();
+  } catch {
+    next(new Error('Unauthorized'));
+  }
+});
+
 io.on('connection', (socket) => {
-  socket.on('join', (id) => {
-    if (id) socket.join(String(id));
-  });
-  socket.on('join_admin', () => {
-    socket.join('admin_channel');
-  });
+  const profile = socket.data.profile;
+  socket.join(String(profile._id));
+  if (profile.role === 'admin') socket.join('admin_channel');
 });
 
 const normaliseMongoUri = (source) => {
