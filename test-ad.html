@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AdPulse Local Test Page</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #f1f5f9; }
+      .content { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+      .ad-container { margin: 2rem 0; padding: 1rem; border: 2px dashed #cbd5e1; text-align: center; border-radius: 8px; background: #f8fafc; }
+      .ad-container::before { content: "Advertisement Slot"; display: block; color: #94a3b8; font-size: 0.875rem; margin-bottom: 1rem; }
+      button { margin-right: 0.5rem; margin-top: 0.5rem; padding: 0.5rem 0.9rem; border: 0; border-radius: 8px; background: #4f46e5; color: white; cursor: pointer; }
+      code { background: #e2e8f0; padding: 0.1rem 0.3rem; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1>Welcome to the Test Publisher Page</h1>
+      <p>Split this window with the AdPulse dashboard. Impressions and clicks should increment live over Socket.IO.</p>
+      <ol>
+        <li>Run <code>npm run dev</code> so the API is on <code>http://localhost:5000</code>.</li>
+        <li>Copy an approved publisher site ID from Publisher → ad code (<code>data-site</code>).</li>
+        <li>Paste it below, then reload to serve an ad (1 impression) and click the banner (1 click).</li>
+        <li>Use “Burst 5 clicks” to trip velocity fraud without billing the advertiser.</li>
+      </ol>
+      <p>
+        Site ID
+        <input id="siteId" style="width:100%;margin-top:0.5rem;padding:0.5rem" placeholder="Mongo ObjectId from data-site" />
+      </p>
+      <button type="button" id="save">Save site ID and reload ad</button>
+      <button type="button" id="burst">Burst 5 clicks (fraud demo)</button>
+      <button type="button" id="self">Simulate self-click</button>
+      <div class="ad-container" id="slot"></div>
+      <p id="status"></p>
+    </div>
+    <script>
+      const API = 'http://localhost:5000/api/ads';
+      const input = document.getElementById('siteId');
+      const slot = document.getElementById('slot');
+      const status = document.getElementById('status');
+      input.value = localStorage.getItem('adpulse_site') || '';
+
+      function loadTag() {
+        const siteId = input.value.trim();
+        if (!siteId) { status.textContent = 'Enter an approved publisher site ID.'; return; }
+        localStorage.setItem('adpulse_site', siteId);
+        slot.innerHTML = '';
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = API + '/adpulse.js';
+        script.setAttribute('data-site', siteId);
+        slot.appendChild(script);
+        status.textContent = 'Ad tag loaded for site ' + siteId;
+      }
+
+      document.getElementById('save').onclick = loadTag;
+      if (input.value) loadTag();
+
+      async function post(body) {
+        const res = await fetch(API + '/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        return res.status;
+      }
+
+      document.getElementById('burst').onclick = async () => {
+        const site = input.value.trim();
+        const campaign = window.__adpulseCampaign;
+        if (!site) { status.textContent = 'Save a site ID first.'; return; }
+        const ad = await fetch(API + '/serve?site=' + encodeURIComponent(site)).then((r) => r.ok ? r.json() : null);
+        if (!ad) { status.textContent = 'No eligible campaign to click.'; return; }
+        const codes = [];
+        for (let i = 0; i < 5; i += 1) codes.push(await post({ site, campaign: ad.id, type: 'click', page: location.href }));
+        status.textContent = 'Burst statuses: ' + codes.join(', ') + ' (429 means Shield blocked billing).';
+      };
+
+      document.getElementById('self').onclick = async () => {
+        const site = input.value.trim();
+        const ad = await fetch(API + '/serve?site=' + encodeURIComponent(site)).then((r) => r.ok ? r.json() : null);
+        if (!ad) { status.textContent = 'No eligible campaign.'; return; }
+        const code = await post({ site, campaign: ad.id, type: 'click', page: location.href, selfClick: true });
+        status.textContent = 'Self-click posted, status ' + code;
+      };
+    </script>
+  </body>
+</html>

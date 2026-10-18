@@ -1,5 +1,4 @@
 # AdPulse
-<<<<<<< HEAD
 
 Full-stack advertising campaign management platform with Admin, Advertiser and Publisher roles.
 
@@ -9,7 +8,33 @@ Full-stack advertising campaign management platform with Admin, Advertiser and P
 2. Run `npm.cmd run install:all` from the repository root.
 3. Run `npm.cmd run seed --prefix server` once to create demo accounts.
 4. Run `npm.cmd run dev`.
-4. Open `http://localhost:5173`.
+5. Open `http://localhost:5173`.
+
+## Included platform features
+
+- Role-based Admin, Advertiser, and Publisher workflows.
+- Live campaign delivery, publisher earnings, and Socket.IO metric updates.
+- Target-aware ad auction using country, age, keywords, bid type, and eCPM.
+- Daily analytics charts and downloadable campaign CSV reports.
+- Fraud Shield rules for click velocity, unnatural CTR, and self-click activity.
+- Admin fraud-alert review and resolution controls.
+- AI campaign-brief generation using Groq when configured, with an offline fallback.
+
+## Local traffic demos
+
+With a local MongoDB connection and test Advertiser/Publisher accounts, generate analytics data with:
+
+```powershell
+npm.cmd run simulate --prefix server
+```
+
+Generate sample fraud alerts with:
+
+```powershell
+npm.cmd run simulate:fraud --prefix server
+```
+
+`test-ad.html` is a local publisher-page harness for testing a copied ad tag, live delivery, and fraud rules. Do not use the simulation scripts against production data.
 
 ## Deployment
 
@@ -31,6 +56,3 @@ VITE_API_URL=https://your-render-api.onrender.com/api
 ```
 
 `client/vercel.json` keeps React routes working when a visitor refreshes or opens a URL directly.
-=======
-Advertisement platform
->>>>>>> af26fda0f441ef0080c239c27aa8982d8c13a94d
