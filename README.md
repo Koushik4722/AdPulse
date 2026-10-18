@@ -19,6 +19,12 @@ Full-stack advertising campaign management platform with Admin, Advertiser and P
 - Fraud Shield rules for click velocity, unnatural CTR, and self-click activity.
 - Admin fraud-alert review and resolution controls.
 - AI campaign-brief generation using Groq when configured, with an offline fallback.
+- AI performance coach compares the latest two weeks of real campaign/publisher metrics and gives evidence-based actions (metrics-based fallback when Groq is unavailable).
+- Demo verification flow, local one-time password-reset links, 24-hour JWTs, and sign-in throttling.
+
+## Free-first project policy
+
+Keep future project changes usable with free tiers or local features; do not add a paid service as a requirement without asking first. This demo intentionally has no email vendor: sign-up displays a one-time demo verification link in the app. This demonstrates the flow but does not prove ownership of the email address. In the deployed free demo, password-reset links are not exposed by the API; contact the project administrator for account recovery. Do not use this no-email setup for public production accounts.
 
 ## Local traffic demos
 
@@ -46,6 +52,7 @@ Use the repository's `render.yaml` Blueprint. Set these Render environment varia
 - `CLIENT_URL`: the deployed Vercel web-app URL.
 - `AD_SERVER_URL`: the deployed Render API URL, for example `https://adpulse-api.onrender.com`.
 - Cloudinary variables only when creative uploads are required.
+No email-provider or custom-domain variables are required for the review demo. Sign-up shows a demo verification link in the app; password-reset preview links are available only in local development.
 
 ### Web app on Vercel
 

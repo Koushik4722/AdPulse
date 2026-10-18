@@ -245,6 +245,114 @@ Do not output markdown code blocks. Output plain JSON only.`
   res.json(strategies[category]);
 });
 
+router.post('/ai-summary', protect, async (req, res) => {
+  try {
+    const now = new Date();
+    const dates = Array.from({ length: 14 }, (_, index) => {
+      const day = new Date(now);
+      day.setUTCDate(day.getUTCDate() - (13 - index));
+      return utcDateKey(day);
+    });
+    const recentDates = dates.slice(7);
+    const previousDates = dates.slice(0, 7);
+    const match = { date: { $in: dates } };
+    if (req.user.role === 'advertiser') match.advertiser = req.user._id;
+    if (req.user.role === 'publisher') match.publisher = req.user._id;
+    const [rows, campaigns] = await Promise.all([
+      DailyStat.aggregate([
+        { $match: match },
+        { $group: {
+          _id: '$date', impressions: { $sum: '$impressions' }, clicks: { $sum: '$clicks' },
+          spent: { $sum: '$spent' }, earnings: { $sum: '$earnings' }
+        } }
+      ]),
+      req.user.role === 'publisher'
+        ? Promise.resolve([])
+        : Campaign.find(req.user.role === 'advertiser' ? { advertiser: req.user._id } : {}).select('name status impressions clicks spent budget').limit(8).lean()
+    ]);
+    const grouped = Object.fromEntries(rows.map((row) => [row._id, row]));
+    const totals = (keys) => keys.reduce((result, date) => {
+      const row = grouped[date] || {};
+      result.impressions += row.impressions || 0;
+      result.clicks += row.clicks || 0;
+      result.spent += row.spent || 0;
+      result.earnings += row.earnings || 0;
+      return result;
+    }, { impressions: 0, clicks: 0, spent: 0, earnings: 0 });
+    const current = totals(recentDates);
+    const previous = totals(previousDates);
+    const metrics = {
+      period: 'last 7 days compared with the preceding 7 days',
+      current,
+      previous,
+      currentCtrPercent: current.impressions ? Number((current.clicks / current.impressions * 100).toFixed(2)) : 0,
+      previousCtrPercent: previous.impressions ? Number((previous.clicks / previous.impressions * 100).toFixed(2)) : 0,
+      campaigns: campaigns.map((campaign) => ({
+        name: campaign.name, status: campaign.status, impressions: campaign.impressions,
+        clicks: campaign.clicks, ctrPercent: campaign.impressions ? Number((campaign.clicks / campaign.impressions * 100).toFixed(2)) : 0,
+        spent: campaign.spent, remainingBudget: Math.max(0, campaign.budget - campaign.spent)
+      }))
+    };
+
+    let insight;
+    let usedAi = false;
+    if (process.env.GROQ_API_KEY && (current.impressions || previous.impressions || campaigns.length)) {
+      try {
+        const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile', temperature: 0.3, response_format: { type: 'json_object' },
+            messages: [
+              { role: 'system', content: 'You are AdPulse analytics coach. Use only supplied metrics; do not invent causes, audiences, or performance facts. If volume is too low, say so. Give a short useful summary, up to two evidence-based observations, and up to three concrete next steps. Return JSON: {"summary": string, "observations": string[], "actions": string[]}. Keep the advice ethical and do not recommend targeting sensitive traits.' },
+              { role: 'user', content: JSON.stringify({ role: req.user.role, metrics }) }
+            ]
+          }),
+          signal: AbortSignal.timeout(15000)
+        });
+        if (aiResponse.ok) {
+          const payload = await aiResponse.json();
+          insight = JSON.parse(payload.choices?.[0]?.message?.content || 'null');
+          if (!insight || typeof insight.summary !== 'string' || !Array.isArray(insight.observations) || !Array.isArray(insight.actions)) insight = null;
+          else usedAi = true;
+        }
+      } catch (error) {
+        console.warn('AI analytics fallback:', error.message);
+      }
+    }
+
+    if (!insight) {
+      const ctrChange = current.impressions && previous.impressions
+        ? Number((metrics.currentCtrPercent - metrics.previousCtrPercent).toFixed(2)) : null;
+      const observations = [];
+      const actions = [];
+      if (!current.impressions && !previous.impressions) {
+        insight = {
+          summary: 'There is not enough delivery data yet to identify a performance trend.',
+          observations: ['No impressions or clicks were recorded in the last 14 days.'],
+          actions: ['Launch or activate a campaign, then return after it has received impressions to get data-based recommendations.']
+        };
+      } else {
+        if (ctrChange !== null) observations.push(`CTR ${ctrChange >= 0 ? 'increased' : 'decreased'} by ${Math.abs(ctrChange).toFixed(2)} percentage points versus the previous 7 days.`);
+        else observations.push('There is not enough activity in both weeks for a like-for-like CTR comparison.');
+        if (current.impressions && !current.clicks) observations.push('Your campaigns received impressions but no clicks this week.');
+        if (req.user.role === 'publisher') actions.push('Review approved site placements and keep the ad tag active on your highest-traffic pages.');
+        else if (current.impressions && !current.clicks) actions.push('Review the creative and landing page relevance before increasing bids.');
+        if (current.impressions && current.clicks) actions.push('Compare campaign CTRs and test a fresh creative on lower-performing campaigns.');
+        if (!actions.length) actions.push('Keep collecting delivery data and review this summary again next week.');
+        insight = {
+          summary: `${current.impressions.toLocaleString()} impressions and ${current.clicks.toLocaleString()} clicks were recorded in the last 7 days.`,
+          observations, actions
+        };
+      }
+    }
+    res.json({ ...insight, generatedAt: new Date(), source: usedAi ? 'ai-assisted' : 'metrics-based', metrics });
+  } catch (error) {
+    console.error('AI summary error:', error);
+    res.status(500).json({ message: 'Unable to generate analytics insights right now.' });
+  }
+});
+
 router.get('/report', protect, async (req, res) => {
   const q = req.user.role === 'advertiser' ? { advertiser: req.user.id } : {};
   const campaigns = await Campaign.find(q);

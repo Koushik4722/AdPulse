@@ -3,6 +3,7 @@ import auth from './routes/auth.js'; import campaigns from './routes/campaigns.j
 const allowedOrigins=[process.env.CLIENT_URL,'https://adpulse-xi.vercel.app','http://localhost:5173'].filter(Boolean);
 const corsOptions={origin:(origin,callback)=>callback(null,!origin||allowedOrigins.includes(origin)),credentials:true};
 const app = express();
+app.set('trust proxy', 1);
 const server = createServer(app);
 const io = new Server(server, { cors: corsOptions });
 
