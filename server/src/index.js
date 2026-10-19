@@ -27,8 +27,10 @@ app.use('/api/ads', ads);
 
 // Global error handler MUST be after all route definitions
 app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ message: 'Images must be 5 MB or smaller.' });
+  if (err.message === 'Upload a PNG, JPG, WEBP, or GIF image.') return res.status(400).json({ message: err.message });
   console.error(err);
-  res.status(500).json({ message: 'Something went wrong' });
+  res.status(err.statusCode || 500).json({ message: err.statusCode && err.statusCode < 500 ? err.message : 'Something went wrong. Please try again.' });
 });
 
 io.use(async (socket, next) => {

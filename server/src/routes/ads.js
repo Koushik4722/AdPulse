@@ -40,8 +40,12 @@ router.get('/serve', publicCors, async (req, res) => {
     const site = await PublisherSite.findOne({ _id: req.query.site, status: 'approved' });
     if (!site) return res.status(404).json({ message: 'Site not found or not approved' });
 
+    await Campaign.updateMany({status:'scheduled',startDate:{$lte:new Date()}},{$set:{status:'active'}});
+    await Campaign.updateMany({status:'active',endDate:{$lt:new Date()}},{$set:{status:'completed'}});
     const campaigns = await Campaign.find({
       status: 'active',
+      $or:[{startDate:null},{startDate:{$exists:false}},{startDate:{$lte:new Date()}}],
+      $and:[{$or:[{endDate:null},{endDate:{$exists:false}},{endDate:{$gte:new Date()}}]}],
       imageUrl: { $exists: true, $ne: '' },
       $expr: { $lt: ['$spent', '$budget'] }
     });

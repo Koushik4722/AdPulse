@@ -3,9 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
-    "simulate": "node src/simulate-traffic.js",
-    "simulate:fraud": "node src/simulate-traffic.js --fraud"
+    "start": "node src/index.js"
   },
   "dependencies": {
     "@clerk/express": "^2.1.80",

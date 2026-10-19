@@ -109,17 +109,19 @@ export default function Dashboard() {
         <h2 className="section-title">Publisher performance</h2>
         <div className="grid gap-4 md:grid-cols-4">
           <Card label="Total revenue" value={`₹${Number(data.earnings || 0).toLocaleString()}`} />
-          <Card label="Approved sites" value={data.activeAds || 0} sub={live ? 'Live socket connected' : undefined} />
+          <Card label="Approved sites" value={data.activeAds || 0} sub={live ? 'Live updates connected' : 'Updates reconnecting'} />
           <Card label="Impressions" value={(data.impressions || 0).toLocaleString()} />
           <Card label="CTR" value={`${data.ctr}%`} />
         </div>
         <div className="card mt-6">
           <h3 className="font-semibold">Your active sites</h3>
-          {(data.sites || []).map((s) => (
+          {(data.sites || []).filter(s=>s.status==='approved').map((s) => (
             <p className="mt-3 text-sm" key={s._id}>
               {s.name} <span className="text-slate-400">{s.url}</span>
             </p>
           ))}
+          {!(data.sites||[]).some(s=>s.status==='approved')&&<div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">No approved sites yet. Add a website in <b>My sites</b>; an administrator will review it before ads can run.</div>}
+          <p className="mt-3 text-xs text-slate-400">Earnings and delivery metrics remain at zero until real ad traffic is recorded.</p>
         </div>
         <AiInsights role={user.role} />
       </>
@@ -137,8 +139,9 @@ export default function Dashboard() {
       </div>
       <div className="card mt-6 h-80">
         <h3 className="font-semibold">Weekly campaign delivery</h3>
+        {!data.hasDeliveryData&&<p className="mt-1 text-xs text-slate-500">No delivery recorded this week. The chart shows actual daily totals, not estimates.</p>}
         <ResponsiveContainer width="100%" height="90%">
-          <LineChart data={data.series}>
+          <LineChart data={data.series} accessibilityLayer>
             <XAxis dataKey="day" />
             <YAxis />
             <Tooltip />
@@ -147,6 +150,7 @@ export default function Dashboard() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      {user.role==='advertiser'&&!(data.campaigns||[]).length&&<div className="card mt-4 text-sm text-slate-600"><b>No campaigns yet.</b> Create a campaign to submit it for review. It will begin delivering only after approval and once its start date arrives.</div>}
       <AiInsights role={user.role} />
     </>
   );

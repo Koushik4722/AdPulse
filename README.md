@@ -13,12 +13,12 @@ Full-stack advertising campaign management platform with Admin, Advertiser and P
 ## Included platform features
 
 - Role-based Admin, Advertiser, and Publisher workflows.
-- Live campaign delivery, publisher earnings, and Socket.IO metric updates.
+- Live campaign delivery, publisher earnings, and Socket.IO metric updates. Totals and charts use recorded ad events only; they do not invent or distribute sample data.
 - Target-aware ad auction using country, age, keywords, bid type, and eCPM.
 - Daily analytics charts and downloadable campaign CSV reports.
 - Fraud Shield rules for click velocity, unnatural CTR, and self-click activity.
 - Admin fraud-alert review and resolution controls.
-- AI campaign-brief generation using Groq when configured, with an offline fallback.
+- Campaign brief helper that uses Groq when configured and clearly labels its offline template suggestions otherwise.
 - AI performance coach compares the latest two weeks of real campaign/publisher metrics and gives evidence-based actions (metrics-based fallback when Groq is unavailable).
 - Clerk-hosted sign-in, sign-up, email verification, account recovery, and session management; MongoDB stores only the AdPulse profile and role linked to the Clerk user ID.
 
@@ -26,21 +26,11 @@ Full-stack advertising campaign management platform with Admin, Advertiser and P
 
 Keep future project changes on free features or free tiers; do not add a paid service or custom domain as a requirement. Clerk offers a free Hobby tier, but its development instance is limited and not recommended for production; Clerk production instances require an associated domain. For this review, use development keys on the existing Vercel URL and do not treat that setup as production-ready. Configure verified Clerk admin email(s) using `CLERK_ADMIN_EMAILS`; users cannot grant themselves administrator access. The existing `adpulse` MongoDB database was cleared as requested, so previous accounts, campaigns, sites, and notifications are gone.
 
-## Local traffic demos
+## Review and test data
 
-With a local MongoDB connection and test Advertiser/Publisher accounts, generate analytics data with:
+The traffic simulator has been removed so fabricated clicks, impressions, spend, and earnings cannot accidentally appear as real production activity. To test delivery, use a separate test database, an approved publisher site, and a real active campaign. The optional `test-ad.html` harness can be used only against that isolated test setup.
 
-```powershell
-npm.cmd run simulate --prefix server
-```
-
-Generate sample fraud alerts with:
-
-```powershell
-npm.cmd run simulate:fraud --prefix server
-```
-
-`test-ad.html` is a local publisher-page harness for testing a copied ad tag, live delivery, and fraud rules. Do not use the simulation scripts against production data.
+Verified Clerk sign-ins create active AdPulse accounts. Campaigns and publisher sites still go through their own admin review workflows; a campaign starts delivering only after approval and its start date.
 
 ## Deployment
 

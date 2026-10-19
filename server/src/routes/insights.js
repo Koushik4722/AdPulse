@@ -56,18 +56,8 @@ router.get('/dashboard', protect, async (req, res) => {
       };
     });
 
-    if (!series.some((s) => s.impressions || s.clicks) && totals.impressions) {
-      const distribution = [0.12, 0.15, 0.18, 0.16, 0.14, 0.13, 0.12];
-      series = dates.map((date, i) => {
-        const imp = Math.round(totals.impressions * distribution[i]);
-        const clk = Math.round(totals.clicks * distribution[i]);
-        const sp = Number((totals.spent * distribution[i]).toFixed(2));
-        return { day: weekday(date), date, impressions: imp, clicks: clk, spent: sp, ctr: imp ? Number(((clk / imp) * 100).toFixed(2)) : 0 };
-      });
-    }
-
     const ctr = totals.impressions ? Number(((totals.clicks / totals.impressions) * 100).toFixed(2)) : 0;
-    res.json({ ...totals, ctr, campaigns, series });
+    res.json({ ...totals, ctr, campaigns, series, hasDeliveryData: Boolean(totals.impressions || totals.clicks) });
   } catch (err) {
     console.error('Dashboard insights error:', err);
     res.status(500).json({ message: 'Error retrieving dashboard metrics' });
@@ -95,6 +85,7 @@ router.get('/fraud', protect, async (req, res) => {
 router.post('/assistant', protect, async (req, res) => {
   const prompt = (req.body.prompt || '').trim();
   if (!prompt) return res.status(400).json({ message: 'Please provide a campaign idea or prompt' });
+  if (prompt.length > 500) return res.status(400).json({ message: 'Keep your campaign idea under 500 characters.' });
 
   // 1. Live Groq LLM API if key is configured
   if (process.env.GROQ_API_KEY) {
@@ -141,7 +132,7 @@ Do not output markdown code blocks. Output plain JSON only.`
         const content = groqData.choices?.[0]?.message?.content;
         if (content) {
           try {
-            return res.json(JSON.parse(content));
+            return res.json({ ...JSON.parse(content), source: 'groq-ai' });
           } catch {
             /* fall through to contextual engine */
           }
@@ -242,7 +233,7 @@ Do not output markdown code blocks. Output plain JSON only.`
     }
   };
 
-  res.json(strategies[category]);
+  res.json({ ...strategies[category], source: 'offline-template' });
 });
 
 router.post('/ai-summary', protect, async (req, res) => {

@@ -49,7 +49,9 @@ router.post('/profile', async (req, res) => {
       email,
       role: isConfiguredAdmin ? 'admin' : roleRequested,
       company: String(req.body.company || '').trim(),
-      approved: isConfiguredAdmin,
+      // Clerk verifies the email before an AdPulse profile can be created. Do
+      // not hold the whole account in a second, confusing approval queue.
+      approved: true,
       emailVerified: true,
       avatar: clerkUser.imageUrl
     });

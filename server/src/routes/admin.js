@@ -1,8 +1,11 @@
 import express from 'express'; import User from '../models/User.js'; import Campaign from '../models/Campaign.js'; import PublisherSite from '../models/PublisherSite.js'; import FraudEvent from '../models/FraudEvent.js'; import {protect,allow} from '../middleware/auth.js';
 const router=express.Router(); router.use(protect,allow('admin'));
 router.get('/overview', async (req, res) => {
+  const now = new Date();
+  await Campaign.updateMany({ status: 'scheduled', startDate: { $lte: now } }, { $set: { status: 'active' } });
+  await Campaign.updateMany({ status: 'active', endDate: { $lt: now } }, { $set: { status: 'completed' } });
   const [users, campaigns, sites, fraud] = await Promise.all([
-    User.find(),
+    User.find().select('name email role company isBlocked emailVerified'),
     Campaign.find().populate('advertiser', 'name'),
     PublisherSite.find(),
     FraudEvent.find().populate('campaign', 'name').sort('-createdAt').limit(20)
@@ -11,7 +14,6 @@ router.get('/overview', async (req, res) => {
   res.json({
     revenue,
     activeCampaigns: campaigns.filter(c => c.status === 'active').length,
-    pendingUsers: users.filter(u => !u.approved && u.role !== 'admin').length,
     users,
     campaigns,
     sites,
@@ -29,7 +31,7 @@ router.get('/overview', async (req, res) => {
 
 router.patch('/users/:id', async (req, res) => {
   const updates = {};
-  ['approved', 'isBlocked'].forEach(k => {
+  ['isBlocked'].forEach(k => {
     if (typeof req.body[k] === 'boolean') updates[k] = req.body[k];
   });
   const user = await User.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true }).select('-password');
