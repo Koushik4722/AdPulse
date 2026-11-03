@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="A sample publisher page for the AdPulse campaign demo." />
+    <title>Campus Tech Journal | Publisher Demo</title>
+    <style>
+      :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #172033; background: #f4f6fb; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { background: #111827; color: white; }
+      nav, main, footer { width: min(960px, calc(100% - 32px)); margin: auto; }
+      nav { min-height: 68px; display: flex; align-items: center; justify-content: space-between; }
+      .brand { font-size: 1.15rem; font-weight: 800; letter-spacing: -.03em; }
+      .brand span { color: #818cf8; }
+      nav a { color: #dbeafe; text-decoration: none; font-size: .9rem; }
+      main { padding: 42px 0 64px; }
+      .eyebrow { color: #4f46e5; font-weight: 700; font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; }
+      h1 { max-width: 720px; margin: 10px 0 12px; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.08; letter-spacing: -.045em; }
+      .lead { max-width: 680px; color: #596579; font-size: 1.1rem; line-height: 1.7; }
+      .ad-label { margin: 28px 0 8px; color: #667085; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+      .ad-slot { min-height: 180px; display: grid; place-items: center; overflow: hidden; border: 1px dashed #aab4c4; border-radius: 14px; background: white; color: #687386; }
+      .ad-slot img { width: 100%; height: auto; }
+      .article { margin-top: 32px; padding: 28px; border: 1px solid #e4e8f0; border-radius: 16px; background: white; line-height: 1.75; }
+      .article h2 { margin-top: 0; font-size: 1.35rem; }
+      .note { margin-top: 20px; color: #697586; font-size: .85rem; }
+      footer { padding: 22px 0 36px; color: #758095; font-size: .8rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Main navigation">
+        <div class="brand">Campus <span>Tech Journal</span></div>
+        <a href="#article">Student technology</a>
+      </nav>
+    </header>
+    <main>
+      <p class="eyebrow">Campus technology</p>
+      <h1>Choosing a laptop for college: what students should compare</h1>
+      <p class="lead">A practical guide to balancing portability, battery life, display quality, and performance for everyday campus work.</p>
+
+      <p class="ad-label">Advertisement</p>
+      <div class="ad-slot" id="ad-slot" aria-label="Advertisement placement">
+        <span id="ad-placeholder">Ad space · available after publisher approval</span>
+      </div>
+
+      <article class="article" id="article">
+        <h2>Start with your daily workload</h2>
+        <p>Before comparing specifications, list the work you expect to do most often. Documents, browsing, programming assignments, and video calls place different demands on a laptop.</p>
+        <p>Students who carry a device between classes may value weight and battery life. A larger display can make reading and multitasking more comfortable, while memory and storage affect how well a computer handles demanding projects.</p>
+        <p>Compare the complete configuration, warranty, and return terms before deciding. The right choice depends on the programs you use and how you study.</p>
+      </article>
+      <p class="note">Sample publisher page for the AdPulse project. The advertisement appears only when an approved site ID and eligible campaign are available.</p>
+    </main>
+    <footer>Campus Tech Journal · Sample publisher page</footer>
+    <script>
+      // Add ?site=APPROVED_SITE_ID after the publisher site is approved.
+      // No ad request is sent until a site ID is supplied in the URL.
+      const siteId = new URLSearchParams(window.location.search).get('site');
+      if (siteId) {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://adpulse-ae5a.onrender.com/api/ads/adpulse.js';
+        script.dataset.site = siteId;
+        document.getElementById('ad-placeholder').remove();
+        document.getElementById('ad-slot').appendChild(script);
+      }
+    </script>
+  </body>
+</html>
