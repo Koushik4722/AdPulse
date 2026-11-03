@@ -136,9 +136,11 @@
 
       <p class="ad-label">Advertisement</p>
       <div class="ad-slot" id="ad-slot" aria-label="Advertisement placement">
-        <span id="ad-placeholder"
-          >Ad space · available after publisher approval</span
-        >
+        <script
+          async
+          src="https://adpulse-ae5a.onrender.com/api/ads/adpulse.js"
+          data-site="6aea3b5dd976bcf831640385"
+        ></script>
       </div>
 
       <article class="article" id="article">
@@ -166,23 +168,5 @@
       </p>
     </main>
     <footer>Campus Tech Journal · Sample publisher page</footer>
-    <script>
-      // Add ?site=APPROVED_SITE_ID after the publisher site is approved.
-      // No ad request is sent until a site ID is supplied in the URL.
-      const siteId = new URLSearchParams(window.location.search).get("site");
-      if (siteId) {
-        const script = document.createElement("script");
-        script.async = true;
-        script.src = "https://adpulse-ae5a.onrender.com/api/ads/adpulse.js";
-        script.dataset.site = siteId;
-        document.getElementById("ad-placeholder").remove();
-        document.getElementById("ad-slot").appendChild(script);
-      }
-    </script>
-    <script
-      async
-      src="https://adpulse-ae5a.onrender.com/api/ads/adpulse.js"
-      data-site="6aea3b5dd976bcf831640385"
-    ></script>
   </body>
 </html>
